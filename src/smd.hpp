@@ -32,8 +32,10 @@ private:
 
     void PrintNote( unsigned char note );
     void PrintInstruction( unsigned char code, std::string message, unsigned int num_parameters );
-    std::optional<unsigned char>      NextByte();
-    void                              Read( const std::string &filename );
+    std::optional<unsigned char> NextByte();
+    void                         Read( const std::string &filename );
+
+    template <int Start, int End> constexpr void GeneratePairs();
 
 public:
     inline SMD( const std::string &filename )
