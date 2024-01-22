@@ -33,7 +33,6 @@ private:
     void PrintNote( unsigned char note );
     void PrintInstruction( unsigned char code, std::string message, unsigned int num_parameters );
     std::optional<unsigned char>      NextByte();
-    template <int... HexNumbers> void generatePairs( std::integer_sequence<int, HexNumbers...> );
     void                              Read( const std::string &filename );
 
 public:
