@@ -111,20 +111,30 @@ void SMD::PrintNote( unsigned char note )
         {
             b.reset();
             b = NextByte();
-            std::printf( " 0x%x", (unsigned int)b.value() );
+
+            if ( b.has_value() )
+                std::printf( " 0x%x", (unsigned int)b.value() );
         }
         std::cout << std::endl;
     }
 }
 
-void SMD::PrintInstruction( unsigned char code, std::string message, unsigned int num_parameters )
+void SMD::PrintInstruction( unsigned char                                       code,
+                            std::string                                         message,
+                            unsigned int                                        num_parameters,
+                            std::function<void( std::optional<unsigned char> )> additionalFunctionality )
 {
     std::printf( "[0x%x]: %s", (unsigned int)code, message.c_str() );
 
     for ( unsigned int i = 0; i < num_parameters; i++ )
     {
         auto byte = NextByte();
-        std::printf( "0x%x ", (unsigned int)byte.value() );
+
+        if ( byte.has_value() )
+        {
+            std::printf( "0x%x ", (unsigned int)byte.value() );
+            additionalFunctionality( byte );
+        }
     }
 
     std::printf( "\n" );
@@ -164,7 +174,14 @@ void SMD::ToMIDI( const std::string &output_filename )
         std::pair<unsigned char, ConvFunc>( 0x99, [&]() { PrintInstruction( 0x99, "End loop", 0 ); } ),
         std::pair<unsigned char, ConvFunc>( 0x9C, [&]() { PrintInstruction( 0x9C, "? ", 3 ); } ),
         std::pair<unsigned char, ConvFunc>( 0xA0, [&]() { PrintInstruction( 0xA0, "Set tempo to ", 1 ); } ),
-        std::pair<unsigned char, ConvFunc>( 0xAC, [&]() { PrintInstruction( 0xAC, "Set instrument to ", 1 ); } ),
+        std::pair<unsigned char, ConvFunc>(
+            0xAC,
+            [&]()
+            {
+                PrintInstruction( 0xAC, "Set instrument to ", 1,
+                                  [&]( std::optional<unsigned char> b )
+                                  { std::printf( "Instrument = %s", this->instruments.at( b.value() ).c_str() ); } );
+            } ),
         std::pair<unsigned char, ConvFunc>( 0xBA, [&]() { PrintInstruction( 0xBA, "Begin channel", 0 ); } ),
         std::pair<unsigned char, ConvFunc>( 0xBF, [&]() { PrintInstruction( 0xBF, "? ", 0 ); } ),
         std::pair<unsigned char, ConvFunc>( 0xC0, [&]() { PrintInstruction( 0xC0, "? ", 0 ); } ),
